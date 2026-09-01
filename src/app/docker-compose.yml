@@ -1,0 +1,133 @@
+# ============================================================================
+# TRADIE Docker Compose - Production Stack
+# MySQL + Backend + Frontend
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # --------------------------------------------------------------------------
+  # MySQL Database
+  # --------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: tradie-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-tradie_root_password_change_in_production}
+      MYSQL_DATABASE: ${DB_NAME:-tradie_production}
+      MYSQL_USER: ${DB_USER:-tradie_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-tradie_password_change_this}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./database/schema_mysql.sql:/docker-entrypoint-initdb.d/01-schema_mysql.sql
+      - ./database/schema_provenance.sql:/docker-entrypoint-initdb.d/02-schema_provenance.sql
+      - ./database/schema_services_aligned.sql:/docker-entrypoint-initdb.d/03-schema_services_aligned.sql
+      - ./database/additional_tables.sql:/docker-entrypoint-initdb.d/04-additional_tables.sql
+    networks:
+      - tradie-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-tradie_root_password_change_in_production}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # TRADIE Backend + Frontend
+  # --------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tradie-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # Server Configuration
+      NODE_ENV: production
+      PORT: 3001
+      APP_URL: ${APP_URL:-http://localhost:3001}
+
+      # Database Configuration
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-tradie_user}
+      DB_PASSWORD: ${DB_PASSWORD:-tradie_password_change_this}
+      DB_NAME: ${DB_NAME:-tradie_production}
+      DB_CONNECTION_LIMIT: 10
+
+      # JWT Secrets (CHANGE THESE IN PRODUCTION!)
+      JWT_SECRET: ${JWT_SECRET:-change_this_to_secure_random_64_char_string_in_production}
+      JWT_EXPIRES_IN: 7d
+      PROVENANCE_JWT_SECRET: ${PROVENANCE_JWT_SECRET:-change_this_provenance_secret_64_chars}
+      PROVENANCE_JWT_EXPIRES_IN: 30d
+
+      # CORS
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:3001}
+
+      # External APIs
+      GROK_API_KEY: ${GROK_API_KEY:-}
+      GROK_API_URL: https://api.x.ai/v1
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FILE: /app/logs/app.log
+
+    ports:
+      - "${APP_PORT:-3001}:3001"
+    volumes:
+      - app-logs:/app/logs
+      - app-uploads:/app/uploads
+    networks:
+      - tradie-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # --------------------------------------------------------------------------
+  # Nginx Reverse Proxy (Optional - for production)
+  # --------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: tradie-nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+    networks:
+      - tradie-network
+    profiles:
+      - production
+
+# ----------------------------------------------------------------------------
+# Networks
+# ----------------------------------------------------------------------------
+networks:
+  tradie-network:
+    driver: bridge
+
+# ----------------------------------------------------------------------------
+# Volumes
+# ----------------------------------------------------------------------------
+volumes:
+  mysql-data:
+    driver: local
+  app-logs:
+    driver: local
+  app-uploads:
+    driver: local
+  nginx-logs:
+    driver: local

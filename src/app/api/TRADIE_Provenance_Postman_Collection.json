@@ -1,0 +1,421 @@
+{
+  "info": {
+    "name": "TRADIE Crop Batch Provenance & NFT Tokenization API",
+    "description": "Complete API collection for crop batch provenance tracking with NFT tokenization and QR code verification",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001/api",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "YOUR_JWT_TOKEN_HERE",
+      "type": "string"
+    },
+    {
+      "key": "crop_batch_id",
+      "value": "CB-VEG-TOM-L5X7M2ABC",
+      "type": "string"
+    },
+    {
+      "key": "token_id",
+      "value": "NFT-TRD-L5X7M2ABC123",
+      "type": "string"
+    },
+    {
+      "key": "producer_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Crop Batch Operations",
+      "item": [
+        {
+          "name": "Create Crop Batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producerId\": \"{{producer_id}}\",\n  \"category\": \"Vegetables\",\n  \"variety\": \"Tomato\",\n  \"farmLocation\": {\n    \"state\": \"Karnataka\",\n    \"district\": \"Bangalore\",\n    \"village\": \"Whitefield\",\n    \"pincode\": \"560066\",\n    \"gpsCoords\": {\n      \"latitude\": 12.9716,\n      \"longitude\": 77.5946\n    }\n  },\n  \"initialData\": {\n    \"plantingDate\": \"2025-01-15\",\n    \"estimatedHarvest\": \"2025-04-15\",\n    \"quantity\": 500,\n    \"unit\": \"kg\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/provenance/crop-batch",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "crop-batch"]
+            },
+            "description": "Create a new crop batch and receive a unique Crop Batch ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Crop Batch by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/provenance/crop-batch/{{crop_batch_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "crop-batch", "{{crop_batch_id}}"]
+            },
+            "description": "Retrieve complete crop batch details with full history timeline"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Producer Crop Batches",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/provenance/crop-batch/producer/{{producer_id}}?limit=20&offset=0&status=active",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "crop-batch", "producer", "{{producer_id}}"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "category",
+                  "value": "Vegetables",
+                  "disabled": true
+                },
+                {
+                  "key": "stage",
+                  "value": "growing",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "Get all crop batches for a specific producer with optional filtering"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. History Tracking",
+      "item": [
+        {
+          "name": "Add History - Planting Stage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"planting\",\n  \"eventType\": \"seeds_planted\",\n  \"description\": \"Planted 500 tomato seeds in prepared soil\",\n  \"data\": {\n    \"seeds\": 500,\n    \"seedVariety\": \"Hybrid Tomato\",\n    \"soilType\": \"Loamy\",\n    \"weather\": \"Partly Cloudy\",\n    \"temperature\": \"28°C\"\n  },\n  \"createdBy\": \"{{producer_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/provenance/crop-batch/{{crop_batch_id}}/history",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "crop-batch", "{{crop_batch_id}}", "history"]
+            },
+            "description": "Add planting stage history entry"
+          },
+          "response": []
+        },
+        {
+          "name": "Add History - Growing Stage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"growing\",\n  \"eventType\": \"fertilizer_applied\",\n  \"description\": \"Applied organic compost fertilizer\",\n  \"data\": {\n    \"fertilizer\": \"Organic Compost\",\n    \"quantity\": \"50kg\",\n    \"method\": \"Broadcasting\",\n    \"irrigation\": \"Drip system\"\n  },\n  \"createdBy\": \"{{producer_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/provenance/crop-batch/{{crop_batch_id}}/history",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "crop-batch", "{{crop_batch_id}}", "history"]
+            },
+            "description": "Add growing stage history entry"
+          },
+          "response": []
+        },
+        {
+          "name": "Add History - Harvesting Stage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"harvesting\",\n  \"eventType\": \"harvest_completed\",\n  \"description\": \"Harvested 450kg of Grade A tomatoes\",\n  \"data\": {\n    \"harvestDate\": \"2025-04-10\",\n    \"actualQuantity\": 450,\n    \"unit\": \"kg\",\n    \"harvestMethod\": \"Manual\",\n    \"weather\": \"Sunny\",\n    \"cropsLoss\": 50,\n    \"lossReason\": \"Natural wastage\"\n  },\n  \"createdBy\": \"{{producer_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/provenance/crop-batch/{{crop_batch_id}}/history",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "crop-batch", "{{crop_batch_id}}", "history"]
+            },
+            "description": "Add harvesting stage history entry"
+          },
+          "response": []
+        },
+        {
+          "name": "Add History - Grading Stage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"grading\",\n  \"eventType\": \"quality_graded\",\n  \"description\": \"Graded as Premium A quality\",\n  \"data\": {\n    \"grade\": \"A\",\n    \"size\": \"Large\",\n    \"color\": \"Deep Red\",\n    \"texture\": \"Firm\",\n    \"moisture\": \"12%\",\n    \"brixLevel\": \"5.5\",\n    \"defects\": \"None\"\n  },\n  \"createdBy\": \"{{producer_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/provenance/crop-batch/{{crop_batch_id}}/history",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "crop-batch", "{{crop_batch_id}}", "history"]
+            },
+            "description": "Add grading stage history entry"
+          },
+          "response": []
+        },
+        {
+          "name": "Add History - Processing Stage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"processing\",\n  \"eventType\": \"processing_completed\",\n  \"description\": \"Cleaned and sorted tomatoes\",\n  \"data\": {\n    \"processingType\": \"Washing and Sorting\",\n    \"equipment\": \"Industrial Washer\",\n    \"duration\": \"2 hours\",\n    \"rejectedQuantity\": 5,\n    \"finalQuantity\": 445\n  },\n  \"createdBy\": \"{{producer_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/provenance/crop-batch/{{crop_batch_id}}/history",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "crop-batch", "{{crop_batch_id}}", "history"]
+            },
+            "description": "Add processing stage history entry"
+          },
+          "response": []
+        },
+        {
+          "name": "Add History - Packing Stage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"packing\",\n  \"eventType\": \"packing_completed\",\n  \"description\": \"Packed in vacuum sealed bags\",\n  \"data\": {\n    \"numberOfBags\": 10,\n    \"bagWeight\": \"45kg\",\n    \"packingDate\": \"2025-04-15\",\n    \"packingMethod\": \"Vacuum sealed\",\n    \"storageConditions\": \"Cool and dry\",\n    \"expiryDays\": 30\n  },\n  \"createdBy\": \"{{producer_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/provenance/crop-batch/{{crop_batch_id}}/history",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "crop-batch", "{{crop_batch_id}}", "history"]
+            },
+            "description": "Add packing stage history entry"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. NFT Tokenization",
+      "item": [
+        {
+          "name": "Tokenize Crop Batch (Generate NFT + QR)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenMetadata\": {\n    \"certifications\": [\n      {\n        \"type\": \"Organic Certificate\",\n        \"issuer\": \"India Organic Certification Agency\",\n        \"documentUrl\": \"https://example.com/certs/organic-123.pdf\",\n        \"issueDate\": \"2025-01-10\"\n      },\n      {\n        \"type\": \"Food Safety Certificate\",\n        \"issuer\": \"FSSAI\",\n        \"issueDate\": \"2025-01-05\"\n      }\n    ],\n    \"qualityReport\": {\n      \"grade\": \"A\",\n      \"moistureContent\": \"12%\",\n      \"pesticides\": \"None detected\",\n      \"heavyMetals\": \"Within safe limits\",\n      \"labName\": \"AgriTest Labs\",\n      \"reportDate\": \"2025-04-12\"\n    },\n    \"packingDetails\": {\n      \"numberOfBags\": 10,\n      \"packingDate\": \"2025-04-15\",\n      \"packingMethod\": \"Vacuum sealed\",\n      \"storageConditions\": \"Temperature controlled 4-8°C\",\n      \"shelfLife\": \"30 days\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/provenance/tokenize/{{crop_batch_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "tokenize", "{{crop_batch_id}}"]
+            },
+            "description": "Tokenize crop batch to generate NFT Token ID and QR code. Returns QR code as Base64 PNG data URL."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. QR Code Verification (PUBLIC)",
+      "item": [
+        {
+          "name": "Get Token Data by Token ID (QR Scan)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/provenance/token/{{token_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "token", "{{token_id}}"]
+            },
+            "description": "PUBLIC ENDPOINT - No authentication required. Retrieve complete crop batch history by scanning QR code and getting token ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Record Token Verification (Scan)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verifiedBy\": \"buyer_456\",\n  \"verificationType\": \"qr_scan\",\n  \"location\": {\n    \"latitude\": 12.9716,\n    \"longitude\": 77.5946,\n    \"address\": \"Bangalore Vegetable Market, Karnataka\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/provenance/token/{{token_id}}/verify",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "token", "{{token_id}}", "verify"]
+            },
+            "description": "PUBLIC ENDPOINT - Record when a token is verified/scanned. Increments scan count automatically."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Token Verification History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/provenance/token/{{token_id}}/verifications",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "token", "{{token_id}}", "verifications"]
+            },
+            "description": "Get all verification/scan records for a token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Statistics & Analytics",
+      "item": [
+        {
+          "name": "Get Provenance Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/provenance/stats/{{producer_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["provenance", "stats", "{{producer_id}}"]
+            },
+            "description": "Get comprehensive provenance statistics for a producer including total batches, tokenizations, scans, and breakdowns by category/stage"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3001/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["health"]
+        },
+        "description": "Check if API server is running"
+      },
+      "response": []
+    }
+  ]
+}

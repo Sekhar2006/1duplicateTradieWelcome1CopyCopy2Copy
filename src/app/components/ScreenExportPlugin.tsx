@@ -1,0 +1,578 @@
+import React, { useState, useRef } from 'react';
+import { Download, FileText, Image, Loader2, CheckCircle2, AlertCircle, Camera, File } from 'lucide-react';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
+import { toast } from 'sonner@2.0.3';
+
+interface ExportOptions {
+  format: 'pdf' | 'word' | 'image';
+  includeHeader: boolean;
+  includeFooter: boolean;
+  pageSize: 'A4' | 'Letter' | 'Legal';
+  orientation: 'portrait' | 'landscape';
+  quality: 'low' | 'medium' | 'high';
+  captureFullPage: boolean;
+}
+
+interface ScreenExportPluginProps {
+  targetRef?: React.RefObject<HTMLElement>;
+  fileName?: string;
+  buttonVariant?: 'default' | 'outline' | 'ghost';
+  showInToolbar?: boolean;
+}
+
+export default function ScreenExportPlugin({
+  targetRef,
+  fileName = 'TRADIE-Screen-Export',
+  buttonVariant = 'outline',
+  showInToolbar = true
+}: ScreenExportPluginProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportStatus, setExportStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+  const [options, setOptions] = useState<ExportOptions>({
+    format: 'pdf',
+    includeHeader: true,
+    includeFooter: true,
+    pageSize: 'A4',
+    orientation: 'portrait',
+    quality: 'high',
+    captureFullPage: true
+  });
+
+  const defaultTargetRef = useRef<HTMLDivElement>(null);
+
+  // Import libraries dynamically
+  const loadLibraries = async () => {
+    const [html2canvas, jsPDF] = await Promise.all([
+      import('html2canvas'),
+      import('jspdf')
+    ]);
+    return { html2canvas: html2canvas.default, jsPDF: jsPDF.default };
+  };
+
+  const captureScreen = async () => {
+    try {
+      const { html2canvas } = await loadLibraries();
+      // If targetRef is provided, use it; otherwise capture document.body
+      const element = targetRef?.current || defaultTargetRef.current || document.body;
+
+      // Validate element
+      if (!element) {
+        throw new Error('No valid element to capture');
+      }
+
+      const canvas = await html2canvas(element, {
+        scale: options.quality === 'high' ? 2 : options.quality === 'medium' ? 1.5 : 1,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#F7FAFC',
+        logging: false,
+        scrollY: -window.scrollY,
+        scrollX: -window.scrollX,
+        windowWidth: element.scrollWidth,
+        windowHeight: options.captureFullPage ? element.scrollHeight : window.innerHeight,
+        // Add image timeout to handle CORS issues
+        imageTimeout: 15000,
+        // Ignore elements that might cause issues
+        ignoreElements: (element) => {
+          return element.tagName === 'IFRAME' || element.classList.contains('no-export');
+        }
+      });
+
+      // Validate canvas was created
+      if (!canvas || canvas.width === 0 || canvas.height === 0) {
+        throw new Error('Invalid canvas generated');
+      }
+
+      return canvas;
+    } catch (error) {
+      console.error('Screen capture error:', error);
+      throw new Error('Failed to capture screen');
+    }
+  };
+
+  const exportToPDF = async (canvas: HTMLCanvasElement) => {
+    try {
+      const { jsPDF } = await loadLibraries();
+      
+      const imgWidth = options.pageSize === 'A4' ? 210 : options.pageSize === 'Letter' ? 216 : 216;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      const pdf = new jsPDF({
+        orientation: options.orientation,
+        unit: 'mm',
+        format: options.pageSize.toLowerCase()
+      });
+
+      // Convert canvas to data URL with quality parameter
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      
+      // Validate image data
+      if (!imgData || !imgData.startsWith('data:image/png')) {
+        throw new Error('Invalid image data generated from canvas');
+      }
+      
+      // Add header
+      if (options.includeHeader) {
+        pdf.setFontSize(16);
+        pdf.setTextColor(0, 62, 109); // Deep blue
+        pdf.text('TRADIE Platform', 10, 10);
+        pdf.setFontSize(10);
+        pdf.setTextColor(90, 107, 122);
+        pdf.text(new Date().toLocaleDateString(), imgWidth - 40, 10);
+      }
+
+      const yOffset = options.includeHeader ? 20 : 10;
+      pdf.addImage(imgData, 'PNG', 10, yOffset, imgWidth - 20, imgHeight);
+
+      // Add footer
+      if (options.includeFooter) {
+        const pageHeight = options.pageSize === 'A4' ? 297 : options.pageSize === 'Letter' ? 279 : 356;
+        pdf.setFontSize(8);
+        pdf.setTextColor(139, 154, 168);
+        pdf.text('Generated by TRADIE Export Plugin', 10, pageHeight - 10);
+        pdf.text(`Page 1`, imgWidth - 20, pageHeight - 10);
+      }
+
+      pdf.save(`${fileName}.pdf`);
+      return true;
+    } catch (error) {
+      console.error('PDF export error:', error);
+      throw new Error('Failed to export PDF');
+    }
+  };
+
+  const exportToWord = async (canvas: HTMLCanvasElement) => {
+    try {
+      // Create a simple HTML structure for Word export
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      
+      // Validate image data
+      if (!imgData || !imgData.startsWith('data:image/png')) {
+        throw new Error('Invalid image data generated from canvas');
+      }
+      
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${fileName}</title>
+          <style>
+            body {
+              font-family: 'Lato', Arial, sans-serif;
+              margin: 20px;
+              background: linear-gradient(135deg, #F7FAFC 0%, #E8F4FC 50%, #D9F2FF 100%);
+            }
+            .header {
+              font-family: 'Playfair Display', serif;
+              color: #003E6D;
+              font-size: 24px;
+              font-weight: 700;
+              margin-bottom: 10px;
+            }
+            .meta {
+              font-size: 12px;
+              color: #5A6B7A;
+              margin-bottom: 20px;
+            }
+            .content {
+              background: white;
+              padding: 20px;
+              border-radius: 8px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            .footer {
+              margin-top: 20px;
+              font-size: 10px;
+              color: #8B9AA8;
+              text-align: center;
+            }
+            img {
+              max-width: 100%;
+              height: auto;
+              border: 1px solid #EEF2F6;
+              border-radius: 4px;
+            }
+          </style>
+        </head>
+        <body>
+          ${options.includeHeader ? `
+            <div class="header">TRADIE Platform Export</div>
+            <div class="meta">Generated on ${new Date().toLocaleString()}</div>
+          ` : ''}
+          <div class="content">
+            <img src="${imgData}" alt="Screen Capture" />
+          </div>
+          ${options.includeFooter ? `
+            <div class="footer">
+              Generated by TRADIE Screen Export Plugin | ${new Date().toLocaleDateString()}
+            </div>
+          ` : ''}
+        </body>
+        </html>
+      `;
+
+      // Convert to Word format using blob
+      const blob = new Blob([htmlContent], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${fileName}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      return true;
+    } catch (error) {
+      console.error('Word export error:', error);
+      throw new Error('Failed to export Word document');
+    }
+  };
+
+  const exportToImage = async (canvas: HTMLCanvasElement): Promise<boolean> => {
+    try {
+      // Convert toBlob callback to Promise
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          try {
+            if (!blob) {
+              reject(new Error('Failed to create image blob'));
+              return;
+            }
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${fileName}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            resolve(true);
+          } catch (err) {
+            reject(err);
+          }
+        }, 'image/png');
+      });
+    } catch (error) {
+      console.error('Image export error:', error);
+      throw new Error('Failed to export image');
+    }
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    setExportStatus('processing');
+    setExportProgress(0);
+
+    try {
+      // Step 1: Capture screen (40%)
+      toast.info('Capturing screen...', { duration: 2000 });
+      setExportProgress(20);
+      
+      const canvas = await captureScreen();
+      setExportProgress(40);
+
+      // Step 2: Process export (40%)
+      toast.info(`Generating ${options.format.toUpperCase()} file...`, { duration: 2000 });
+      setExportProgress(60);
+
+      let success = false;
+      switch (options.format) {
+        case 'pdf':
+          success = await exportToPDF(canvas);
+          break;
+        case 'word':
+          success = await exportToWord(canvas);
+          break;
+        case 'image':
+          success = await exportToImage(canvas);
+          break;
+      }
+
+      setExportProgress(80);
+
+      // Step 3: Complete (20%)
+      if (success) {
+        setExportProgress(100);
+        setExportStatus('success');
+        toast.success(`Successfully exported to ${options.format.toUpperCase()}!`, {
+          description: `File: ${fileName}.${options.format === 'word' ? 'doc' : options.format === 'pdf' ? 'pdf' : 'png'}`,
+          duration: 4000
+        });
+        
+        setTimeout(() => {
+          setIsOpen(false);
+          setExportStatus('idle');
+          setExportProgress(0);
+        }, 2000);
+      }
+    } catch (error) {
+      setExportStatus('error');
+      toast.error('Export failed', {
+        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        duration: 5000
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button
+            variant={buttonVariant}
+            size="sm"
+            className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0"
+          >
+            <Download className="h-4 w-4" />
+            Export Screen
+          </Button>
+        </DialogTrigger>
+        
+        <DialogContent className="sm:max-w-[600px] bg-gradient-to-br from-[var(--gradient-start)] via-[var(--gradient-middle)] to-[var(--gradient-end)]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[var(--blue-primary)]" style={{ fontFamily: 'Playfair Display, serif' }}>
+              <Camera className="h-6 w-6 text-[var(--accent-gold)]" />
+              Export Screen & Wireframes
+            </DialogTitle>
+            <DialogDescription className="text-[var(--text-secondary)]">
+              Export your screen or wireframes to PDF, Word, or Image format with customizable settings.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Export Format */}
+            <div className="space-y-2">
+              <Label className="font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                Export Format
+              </Label>
+              <div className="grid grid-cols-3 gap-3">
+                <Card
+                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                    options.format === 'pdf' 
+                      ? 'border-[var(--accent-gold)] bg-white shadow-md' 
+                      : 'border-gray-200 bg-white/50'
+                  }`}
+                  onClick={() => setOptions({ ...options, format: 'pdf' })}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <FileText className={`h-8 w-8 ${options.format === 'pdf' ? 'text-[var(--accent-gold)]' : 'text-gray-400'}`} />
+                    <span className="text-sm font-medium">PDF</span>
+                  </div>
+                </Card>
+                
+                <Card
+                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                    options.format === 'word' 
+                      ? 'border-[var(--accent-gold)] bg-white shadow-md' 
+                      : 'border-gray-200 bg-white/50'
+                  }`}
+                  onClick={() => setOptions({ ...options, format: 'word' })}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <File className={`h-8 w-8 ${options.format === 'word' ? 'text-[var(--accent-gold)]' : 'text-gray-400'}`} />
+                    <span className="text-sm font-medium">Word</span>
+                  </div>
+                </Card>
+                
+                <Card
+                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                    options.format === 'image' 
+                      ? 'border-[var(--accent-gold)] bg-white shadow-md' 
+                      : 'border-gray-200 bg-white/50'
+                  }`}
+                  onClick={() => setOptions({ ...options, format: 'image' })}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Image className={`h-8 w-8 ${options.format === 'image' ? 'text-[var(--accent-gold)]' : 'text-gray-400'}`} />
+                    <span className="text-sm font-medium">Image</span>
+                  </div>
+                </Card>
+              </div>
+            </div>
+
+            {/* Page Settings */}
+            {(options.format === 'pdf' || options.format === 'word') && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label style={{ fontFamily: 'Montserrat, sans-serif' }}>Page Size</Label>
+                  <Select
+                    value={options.pageSize}
+                    onValueChange={(value: 'A4' | 'Letter' | 'Legal') =>
+                      setOptions({ ...options, pageSize: value })
+                    }
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A4">A4</SelectItem>
+                      <SelectItem value="Letter">Letter</SelectItem>
+                      <SelectItem value="Legal">Legal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label style={{ fontFamily: 'Montserrat, sans-serif' }}>Orientation</Label>
+                  <Select
+                    value={options.orientation}
+                    onValueChange={(value: 'portrait' | 'landscape') =>
+                      setOptions({ ...options, orientation: value })
+                    }
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="portrait">Portrait</SelectItem>
+                      <SelectItem value="landscape">Landscape</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {/* Quality Settings */}
+            <div className="space-y-2">
+              <Label style={{ fontFamily: 'Montserrat, sans-serif' }}>Export Quality</Label>
+              <Select
+                value={options.quality}
+                onValueChange={(value: 'low' | 'medium' | 'high') =>
+                  setOptions({ ...options, quality: value })
+                }
+              >
+                <SelectTrigger className="bg-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low (Faster)</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High (Best Quality)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Additional Options */}
+            <Card className="p-4 bg-white/70 space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="header"
+                  checked={options.includeHeader}
+                  onCheckedChange={(checked) =>
+                    setOptions({ ...options, includeHeader: checked as boolean })
+                  }
+                />
+                <Label htmlFor="header" className="cursor-pointer">
+                  Include header with title and date
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="footer"
+                  checked={options.includeFooter}
+                  onCheckedChange={(checked) =>
+                    setOptions({ ...options, includeFooter: checked as boolean })
+                  }
+                />
+                <Label htmlFor="footer" className="cursor-pointer">
+                  Include footer with page numbers
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="fullpage"
+                  checked={options.captureFullPage}
+                  onCheckedChange={(checked) =>
+                    setOptions({ ...options, captureFullPage: checked as boolean })
+                  }
+                />
+                <Label htmlFor="fullpage" className="cursor-pointer">
+                  Capture full page (scroll included)
+                </Label>
+              </div>
+            </Card>
+
+            {/* Export Progress */}
+            {isExporting && (
+              <Card className="p-4 bg-white border-[var(--accent-gold)]">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {exportStatus === 'processing' && 'Exporting...'}
+                      {exportStatus === 'success' && 'Export Complete!'}
+                      {exportStatus === 'error' && 'Export Failed'}
+                    </span>
+                    <span className="text-sm text-[var(--text-secondary)]">{exportProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-[var(--accent-gold)] to-[var(--accent-gold-dark)] h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${exportProgress}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                    {exportStatus === 'processing' && (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Processing your export...
+                      </>
+                    )}
+                    {exportStatus === 'success' && (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        Download started successfully!
+                      </>
+                    )}
+                    {exportStatus === 'error' && (
+                      <>
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                        Something went wrong. Please try again.
+                      </>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Export Button */}
+            <Button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="w-full bg-gradient-to-r from-[var(--blue-primary)] to-[var(--blue-light)] hover:from-[var(--blue-dark)] hover:to-[var(--blue-primary)] text-white shadow-lg"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export to {options.format.toUpperCase()}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

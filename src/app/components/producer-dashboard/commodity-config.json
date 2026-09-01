@@ -1,0 +1,312 @@
+{
+  "commodityTypes": [
+    "Vegetables",
+    "Leafy Vegetables",
+    "Berries",
+    "Fruits",
+    "Grains",
+    "Nuts",
+    "Spices",
+    "Flowers",
+    "Pulses",
+    "Herbs",
+    "Oil Seeds",
+    "Others"
+  ],
+  "qualityCheckCriteria": {
+    "default": {
+      "gradingCriteria": ["size", "color", "grade"],
+      "processingRequired": false
+    },
+    "Spices": {
+      "gradingCriteria": ["aroma", "color", "grade"],
+      "processingRequired": true
+    },
+    "Fruits": {
+      "gradingCriteria": ["color", "size", "firmness"],
+      "processingRequired": true
+    },
+    "Grains": {
+      "gradingCriteria": ["size", "color", "moisture", "grade"],
+      "processingRequired": true
+    },
+    "Nuts": {
+      "gradingCriteria": ["size", "color", "moisture", "grade"],
+      "processingRequired": true
+    },
+    "Pulses": {
+      "gradingCriteria": ["size", "color", "moisture", "grade"],
+      "processingRequired": true
+    },
+    "Herbs": {
+      "gradingCriteria": ["aroma", "color", "leafQuality", "moisture", "grade"],
+      "processingRequired": true
+    },
+    "Oil Seeds": {
+      "gradingCriteria": ["size", "color", "moisture", "oilContent", "grade"],
+      "processingRequired": true
+    }
+  },
+  "externalVerificationOptions": [
+    "3rd Party Verifier",
+    "Government Appointee",
+    "Lab Report",
+    "Buyer Classification"
+  ],
+  "qualityCheckFormConfig": {
+    "Vegetables": {
+      "gradingCriteria": {
+        "size": true,
+        "color": true,
+        "grade": true,
+        "firmness": true,
+        "texture": true
+      },
+      "processingRequired": true,
+      "dryingMandatory": false,
+      "specificGrades": ["Premium (A+)", "Grade A", "Grade B", "Grade C"],
+      "qualityParameters": [
+        "Size uniformity",
+        "Color consistency",
+        "Surface blemishes",
+        "Firmness",
+        "Shape regularity"
+      ]
+    },
+    "Leafy Vegetables": {
+      "gradingCriteria": {
+        "color": true,
+        "grade": true,
+        "leafQuality": true,
+        "texture": true
+      },
+      "processingRequired": true,
+      "dryingMandatory": false,
+      "specificGrades": ["Fresh Grade A", "Fresh Grade B", "Fresh Grade C"],
+      "qualityParameters": [
+        "Leaf color intensity",
+        "Wilting level",
+        "Pest damage",
+        "Freshness",
+        "Crispness"
+      ]
+    },
+    "Berries": {
+      "gradingCriteria": {
+        "size": true,
+        "color": true,
+        "grade": true,
+        "firmness": true
+      },
+      "processingRequired": true,
+      "dryingMandatory": false,
+      "specificGrades": ["Premium", "Grade A", "Grade B", "Processing Grade"],
+      "qualityParameters": [
+        "Berry size",
+        "Color uniformity",
+        "Ripeness",
+        "Firmness",
+        "Sugar content"
+      ]
+    },
+    "Fruits": {
+      "gradingCriteria": {
+        "size": true,
+        "color": true,
+        "grade": true,
+        "firmness": true,
+        "texture": true
+      },
+      "processingRequired": true,
+      "dryingMandatory": false,
+      "specificGrades": ["Export Quality", "Premium", "Grade A", "Grade B", "Grade C"],
+      "qualityParameters": [
+        "Size and weight",
+        "Color development",
+        "Ripeness level",
+        "Blemishes",
+        "Firmness"
+      ]
+    },
+    "Grains": {
+      "gradingCriteria": {
+        "size": true,
+        "color": true,
+        "grade": true,
+        "moisture": true
+      },
+      "processingRequired": true,
+      "dryingMandatory": true,
+      "specificGrades": ["Grade A", "Grade B", "Grade C", "FAQ (Fair Average Quality)"],
+      "qualityParameters": [
+        "Moisture content",
+        "Foreign matter",
+        "Broken grains",
+        "Color uniformity",
+        "Insect damage"
+      ]
+    },
+    "Nuts": {
+      "gradingCriteria": {
+        "size": true,
+        "color": true,
+        "grade": true,
+        "moisture": true
+      },
+      "processingRequired": true,
+      "dryingMandatory": true,
+      "specificGrades": ["Premium", "Grade A", "Grade B", "Industrial Grade"],
+      "qualityParameters": [
+        "Moisture content",
+        "Shell integrity",
+        "Kernel quality",
+        "Size consistency",
+        "Rancidity"
+      ]
+    },
+    "Spices": {
+      "gradingCriteria": {
+        "aroma": true,
+        "color": true,
+        "grade": true,
+        "moisture": true
+      },
+      "processingRequired": true,
+      "dryingMandatory": true,
+      "specificGrades": ["Export Quality", "Premium", "Grade A", "Grade B"],
+      "qualityParameters": [
+        "Aroma intensity",
+        "Color richness",
+        "Moisture content",
+        "Oil content",
+        "Foreign matter"
+      ]
+    },
+    "Flowers": {
+      "gradingCriteria": {
+        "color": true,
+        "grade": true,
+        "petalCount": true,
+        "texture": true
+      },
+      "processingRequired": false,
+      "dryingMandatory": false,
+      "specificGrades": ["Premium", "Grade A", "Grade B", "Bulk"],
+      "qualityParameters": [
+        "Bloom fullness",
+        "Petal count",
+        "Color vibrancy",
+        "Stem strength",
+        "Freshness"
+      ]
+    },
+    "Pulses": {
+      "gradingCriteria": {
+        "size": true,
+        "color": true,
+        "grade": true,
+        "moisture": true
+      },
+      "processingRequired": true,
+      "dryingMandatory": true,
+      "specificGrades": ["Grade A", "Grade B", "Grade C", "FAQ"],
+      "qualityParameters": [
+        "Moisture content",
+        "Split percentage",
+        "Foreign matter",
+        "Size uniformity",
+        "Insect damage"
+      ]
+    },
+    "Herbs": {
+      "gradingCriteria": {
+        "aroma": true,
+        "color": true,
+        "grade": true,
+        "leafQuality": true,
+        "moisture": true
+      },
+      "processingRequired": true,
+      "dryingMandatory": true,
+      "specificGrades": ["Organic Premium", "Premium", "Grade A", "Grade B"],
+      "qualityParameters": [
+        "Aroma potency",
+        "Leaf integrity",
+        "Color retention",
+        "Moisture content",
+        "Essential oil content"
+      ]
+    },
+    "Oil Seeds": {
+      "gradingCriteria": {
+        "size": true,
+        "color": true,
+        "grade": true,
+        "moisture": true,
+        "oilContent": true
+      },
+      "processingRequired": true,
+      "dryingMandatory": true,
+      "specificGrades": ["Premium", "Grade A", "Grade B", "Industrial"],
+      "qualityParameters": [
+        "Oil content",
+        "Moisture level",
+        "Foreign matter",
+        "Damaged seeds",
+        "Rancidity"
+      ]
+    },
+    "Others": {
+      "gradingCriteria": {
+        "custom": true
+      },
+      "processingRequired": false,
+      "dryingMandatory": false,
+      "specificGrades": ["Premium", "Grade A", "Grade B", "Grade C"],
+      "qualityParameters": [
+        "Visual inspection",
+        "Weight/quantity",
+        "Quality consistency",
+        "Market standards"
+      ]
+    }
+  },
+  "sizeOptions": {
+    "generic": ["Extra Large", "Large", "Medium", "Small", "Mixed Sizes"],
+    "berries": ["Jumbo", "Large", "Medium", "Small"],
+    "grains": ["Bold", "Medium", "Small", "Broken"],
+    "nuts": ["Jumbo", "Large", "Medium", "Baby"]
+  },
+  "colorOptions": {
+    "generic": ["Uniform Color", "Slightly Varied", "Mixed Colors"],
+    "leafy": ["Dark Green", "Medium Green", "Light Green", "Varied"],
+    "berries": ["Deep Color", "Bright Color", "Light Color", "Mixed"],
+    "spices": ["Rich Color", "Standard Color", "Light Color"]
+  },
+  "moistureOptions": [
+    "Below 10%",
+    "10-12%",
+    "12-14%",
+    "14-16%",
+    "Above 16%"
+  ],
+  "aromaOptions": [
+    "Excellent/Strong",
+    "Good/Moderate",
+    "Fair/Mild",
+    "Poor/Weak"
+  ],
+  "textureOptions": [
+    "Firm",
+    "Slightly Soft",
+    "Soft",
+    "Very Soft"
+  ],
+  "firmnessOptions": [
+    "Very Firm",
+    "Firm",
+    "Medium Firm",
+    "Soft",
+    "Very Soft"
+  ]
+}

@@ -1,0 +1,455 @@
+{
+  "info": {
+    "name": "TRADIE Quality Check & Tokenization API",
+    "description": "Complete API collection for Quality Verification & Tokenization System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "quality-check-api-v1"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001/api",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "quality_check_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "producer_id",
+      "value": "PROD1234",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    pm.collectionVariables.set('auth_token', jsonData.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Quality Check - Submit",
+      "item": [
+        {
+          "name": "Submit Spices Quality Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Quality check submitted\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.collectionVariables.set('quality_check_id', jsonData.data.qualityCheckId);",
+                  "    pm.collectionVariables.set('token_id', jsonData.data.tokenId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producerId\": \"{{producer_id}}\",\n  \"commodity\": \"Spices\",\n  \"grading\": {\n    \"aroma\": \"Strong\",\n    \"color\": \"Rich Red\",\n    \"grade\": \"A\"\n  },\n  \"harvestMethod\": [\"labor\", \"machine\"],\n  \"processingDone\": true,\n  \"qualityCheckTiers\": {\n    \"selfAssessment\": true,\n    \"externalAssessment\": {\n      \"type\": \"Lab Report\",\n      \"documentUrl\": \"https://labreports.example.com/report123.pdf\",\n      \"rating\": 4.5,\n      \"comments\": \"Meets high-quality standards\"\n    }\n  },\n  \"salesListing\": {\n    \"saleType\": \"Commission Agent\",\n    \"agentRating\": 4.8,\n    \"qualitySpecification\": \"Grade A+\"\n  },\n  \"packingDetails\": {\n    \"numberOfBags\": 25,\n    \"variety\": \"Cinnamon\",\n    \"harvestDate\": \"2025-10-15\",\n    \"processingDate\": \"2025-10-18\",\n    \"packingDate\": \"2025-10-20\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/quality-check",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Vegetables Quality Check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producerId\": \"{{producer_id}}\",\n  \"commodity\": \"Vegetables\",\n  \"grading\": {\n    \"size\": \"Large\",\n    \"color\": \"Uniform Color\",\n    \"firmness\": \"Firm\",\n    \"grade\": \"A\"\n  },\n  \"harvestMethod\": [\"labor\"],\n  \"processingDone\": true,\n  \"qualityCheckTiers\": {\n    \"selfAssessment\": true\n  },\n  \"salesListing\": {\n    \"saleType\": \"Direct\"\n  },\n  \"packingDetails\": {\n    \"numberOfBags\": 50,\n    \"variety\": \"Tomatoes\",\n    \"harvestDate\": \"2025-10-20\",\n    \"packingDate\": \"2025-10-22\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/quality-check",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Grains Quality Check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producerId\": \"{{producer_id}}\",\n  \"commodity\": \"Grains\",\n  \"grading\": {\n    \"size\": \"Bold\",\n    \"color\": \"Uniform Color\",\n    \"moisture\": \"Below 10%\",\n    \"grade\": \"A\"\n  },\n  \"harvestMethod\": [\"machine\"],\n  \"processingDone\": true,\n  \"qualityCheckTiers\": {\n    \"selfAssessment\": true,\n    \"externalAssessment\": {\n      \"type\": \"Government Appointee\",\n      \"rating\": 4.7,\n      \"comments\": \"Excellent moisture content and grain quality\"\n    }\n  },\n  \"packingDetails\": {\n    \"numberOfBags\": 100,\n    \"variety\": \"Basmati Rice\",\n    \"harvestDate\": \"2025-10-10\",\n    \"processingDate\": \"2025-10-15\",\n    \"packingDate\": \"2025-10-18\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/quality-check",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Quality Check - Retrieve",
+      "item": [
+        {
+          "name": "Get Quality Check by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/quality-check/{{quality_check_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check", "{{quality_check_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Quality Check by Token (QR Scan)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Token data retrieved\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data).to.have.property('tokenId');",
+                  "    pm.expect(jsonData.data).to.have.property('commodityType');",
+                  "    pm.expect(jsonData.data).to.have.property('grading');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/quality-check/token/{{token_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check", "token", "{{token_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Producer Quality Checks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/quality-check/producer/{{producer_id}}?limit=10&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check", "producer", "{{producer_id}}"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "commodity",
+                  "value": "Spices",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Quality Check - Update",
+      "item": [
+        {
+          "name": "Update Quality Check",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grading\": {\n    \"aroma\": \"Excellent\",\n    \"color\": \"Dark Red\",\n    \"grade\": \"A+\"\n  },\n  \"qualityCheckTiers\": {\n    \"externalAssessment\": {\n      \"type\": \"3rd Party Verifier\",\n      \"rating\": 4.9,\n      \"comments\": \"Outstanding quality after re-verification\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/quality-check/{{quality_check_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check", "{{quality_check_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Feedback",
+      "item": [
+        {
+          "name": "Add Feedback - Market Yard",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"Market Yard\",\n  \"rating\": 4.2,\n  \"comment\": \"Good quality, consistent aroma. Minor color variations noted.\",\n  \"source\": \"Market Inspector\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/quality-check/{{quality_check_id}}/feedback",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check", "{{quality_check_id}}", "feedback"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Feedback - End User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"End User\",\n  \"rating\": 4.5,\n  \"comment\": \"Excellent aroma and quality. Highly satisfied.\",\n  \"source\": \"Consumer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/quality-check/{{quality_check_id}}/feedback",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check", "{{quality_check_id}}", "feedback"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Quality Check - Delete",
+      "item": [
+        {
+          "name": "Delete Quality Check",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/quality-check/{{quality_check_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check", "{{quality_check_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Test Data Scenarios",
+      "item": [
+        {
+          "name": "Complete Workflow - Spices with External Verification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Complete workflow successful\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var jsonData = pm.response.json();",
+                  "    console.log('Token ID:', jsonData.data.tokenId);",
+                  "    console.log('QR Code URL:', jsonData.data.qrCodeUrl);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producerId\": \"PROD1234\",\n  \"commodity\": \"Spices\",\n  \"grading\": {\n    \"aroma\": \"Excellent/Strong\",\n    \"color\": \"Rich Color\",\n    \"moisture\": \"Below 10%\",\n    \"grade\": \"Export Quality\"\n  },\n  \"harvestMethod\": [\"labor\"],\n  \"processingDone\": true,\n  \"qualityCheckTiers\": {\n    \"selfAssessment\": true,\n    \"externalAssessment\": {\n      \"type\": \"Lab Report\",\n      \"documentUrl\": \"https://cdn.example.com/lab-reports/spices-2025-10-20.pdf\",\n      \"rating\": 4.8,\n      \"comments\": \"Tested for moisture content (8%), oil content (5.2%), foreign matter (0.1%). All parameters meet export quality standards.\"\n    }\n  },\n  \"salesListing\": {\n    \"saleType\": \"Commission Agent\",\n    \"agentRating\": 4.7,\n    \"qualitySpecification\": \"Export Quality - Organic Certified\"\n  },\n  \"packingDetails\": {\n    \"numberOfBags\": 50,\n    \"variety\": \"Guntur Sannam Chili\",\n    \"harvestDate\": \"2025-10-15\",\n    \"processingDate\": \"2025-10-18\",\n    \"packingDate\": \"2025-10-20\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/quality-check",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Simple Workflow - Self Assessment Only",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producerId\": \"PROD1234\",\n  \"commodity\": \"Vegetables\",\n  \"grading\": {\n    \"size\": \"Large\",\n    \"color\": \"Uniform Color\",\n    \"firmness\": \"Firm\",\n    \"grade\": \"Premium (A+)\"\n  },\n  \"harvestMethod\": [\"labor\"],\n  \"processingDone\": false,\n  \"qualityCheckTiers\": {\n    \"selfAssessment\": true\n  },\n  \"packingDetails\": {\n    \"numberOfBags\": 30,\n    \"variety\": \"Organic Tomatoes\",\n    \"harvestDate\": \"2025-10-22\",\n    \"packingDate\": \"2025-10-22\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/quality-check",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error Test - Missing Required Fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Returns 400 for missing fields\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.eql(false);",
+                  "    pm.expect(jsonData).to.have.property('required');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producerId\": \"PROD1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/quality-check",
+              "host": ["{{base_url}}"],
+              "path": ["quality-check"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

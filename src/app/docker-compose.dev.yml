@@ -1,0 +1,156 @@
+# ============================================================================
+# TRADIE Docker Compose - DEVELOPMENT Environment
+# Hot-reload enabled, debug mode, local volumes mounted
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # --------------------------------------------------------------------------
+  # MySQL Database (Development)
+  # --------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: tradie-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: dev_root_password
+      MYSQL_DATABASE: tradie_development
+      MYSQL_USER: tradie_dev
+      MYSQL_PASSWORD: dev_password
+    ports:
+      - "3307:3306"  # Use different port to avoid conflicts
+    volumes:
+      - mysql-dev-data:/var/lib/mysql
+      - ./database/schema_mysql.sql:/docker-entrypoint-initdb.d/01-schema_mysql.sql
+      - ./database/schema_provenance.sql:/docker-entrypoint-initdb.d/02-schema_provenance.sql
+      - ./database/schema_services_aligned.sql:/docker-entrypoint-initdb.d/03-schema_services_aligned.sql
+      - ./database/additional_tables.sql:/docker-entrypoint-initdb.d/04-additional_tables.sql
+    networks:
+      - tradie-dev-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pdev_root_password"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # --------------------------------------------------------------------------
+  # TRADIE Backend (Development with hot-reload)
+  # --------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+    container_name: tradie-backend-dev
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      APP_URL: http://localhost:3001
+
+      # Database
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: tradie_dev
+      DB_PASSWORD: dev_password
+      DB_NAME: tradie_development
+      DB_LOGGING: true
+
+      # JWT Secrets (dev only)
+      JWT_SECRET: dev_jwt_secret_for_testing_only
+      JWT_EXPIRES_IN: 7d
+      PROVENANCE_JWT_SECRET: dev_provenance_jwt_secret_for_testing
+      PROVENANCE_JWT_EXPIRES_IN: 30d
+
+      # CORS
+      CORS_ORIGIN: http://localhost:3000,http://localhost:3001
+
+      # Debug
+      DEBUG: tradie:*
+      LOG_LEVEL: debug
+
+    ports:
+      - "3001:3001"
+    volumes:
+      # Mount source code for hot-reload
+      - ./api:/app
+      - /app/node_modules  # Prevent overwriting node_modules
+      - ./database:/app/database:ro
+    networks:
+      - tradie-dev-network
+    command: npm run dev
+
+  # --------------------------------------------------------------------------
+  # TRADIE Frontend (Development with hot-reload)
+  # --------------------------------------------------------------------------
+  frontend:
+    image: node:18-alpine
+    container_name: tradie-frontend-dev
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      REACT_APP_API_URL: http://localhost:3001
+      WATCHPACK_POLLING: true  # Enable polling for Docker
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot-reload
+      - .:/app
+      - /app/node_modules
+    networks:
+      - tradie-dev-network
+    command: npm start
+
+  # --------------------------------------------------------------------------
+  # phpMyAdmin (Optional - Database Management UI)
+  # --------------------------------------------------------------------------
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: tradie-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: tradie_dev
+      PMA_PASSWORD: dev_password
+    ports:
+      - "8080:80"
+    networks:
+      - tradie-dev-network
+    profiles:
+      - tools
+
+  # --------------------------------------------------------------------------
+  # MailHog (Optional - Email Testing)
+  # --------------------------------------------------------------------------
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: tradie-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - tradie-dev-network
+    profiles:
+      - tools
+
+# ----------------------------------------------------------------------------
+# Networks
+# ----------------------------------------------------------------------------
+networks:
+  tradie-dev-network:
+    driver: bridge
+
+# ----------------------------------------------------------------------------
+# Volumes
+# ----------------------------------------------------------------------------
+volumes:
+  mysql-dev-data:
+    driver: local

@@ -1,0 +1,639 @@
+{
+  "flow_metadata": {
+    "name": "Commission Agent Order Flow",
+    "version": "1.0",
+    "description": "Complete post-tokenization flow for storage/sell decision, marketplace browsing, agent engagement, and order confirmation with Grok AI integration",
+    "created": "2025-10-22",
+    "screens_count": 8,
+    "integration_point": "post_lot_tokenization"
+  },
+  "screens": [
+    {
+      "id": "storage_or_sell_decision",
+      "title": "Store or Sell Your Commodity",
+      "component": "StorageSellDecisionScreen",
+      "route": "/producer/post-tokenization/decision",
+      "description": "Decision point after lot tokenization - producer chooses to store or sell",
+      "elements": [
+        {
+          "type": "text",
+          "content": "Your lot and tokenization are complete. Choose how to proceed:",
+          "style": "heading"
+        },
+        {
+          "type": "info_card",
+          "content": "Your commodity has been successfully tokenized and is ready for the next step"
+        },
+        {
+          "type": "button_group",
+          "layout": "vertical",
+          "buttons": [
+            {
+              "id": "store_option",
+              "label": "Store",
+              "description": "Find secure storage facilities near you",
+              "icon": "Warehouse",
+              "next_screen": "storage_facility_selection"
+            },
+            {
+              "id": "sell_option",
+              "label": "Sell",
+              "description": "List your commodity on marketplace or engage agent",
+              "icon": "ShoppingCart",
+              "next_screen": "commodity_listing_sell"
+            }
+          ]
+        }
+      ],
+      "prerequisites": ["lot_created", "lot_tokenized"],
+      "data_required": ["lot_id", "commodity_type", "quantity", "quality_grade"]
+    },
+    {
+      "id": "storage_facility_selection",
+      "title": "Select Storage Facility",
+      "component": "StorageFacilitySelectionScreen",
+      "route": "/producer/storage/select-facility",
+      "description": "Browse and select storage facilities with map view, filters, and ratings",
+      "elements": [
+        {
+          "type": "map_view",
+          "id": "storage_facility_map",
+          "features": ["user_location", "facility_markers", "distance_calculation"],
+          "default_zoom": 12
+        },
+        {
+          "type": "list_view",
+          "items_source": "storage_facilities",
+          "api_endpoint": "/api/storage-facilities",
+          "fields": [
+            {"key": "name", "label": "Facility Name", "sortable": true},
+            {"key": "distance", "label": "Distance", "sortable": true, "format": "km"},
+            {"key": "price", "label": "Price per kg/month", "sortable": true, "format": "currency"},
+            {"key": "reputation", "label": "Rating", "sortable": true, "format": "stars"}
+          ],
+          "filters": [
+            {"key": "capacity", "label": "Storage Capacity", "type": "range"},
+            {"key": "price_range", "label": "Price Range", "type": "range"},
+            {"key": "distance", "label": "Max Distance", "type": "slider"},
+            {"key": "reputation", "label": "Min Rating", "type": "slider", "min": 1, "max": 5}
+          ],
+          "action_button": {
+            "label": "Select This Facility",
+            "action": "select_facility",
+            "confirmation_required": true
+          }
+        }
+      ],
+      "prerequisites": ["storage_decision_made"],
+      "data_required": ["user_location", "commodity_quantity"]
+    },
+    {
+      "id": "marketplace_agent_browsing",
+      "title": "Browse Marketplaces & Commission Agents",
+      "component": "MarketplaceAgentBrowsingScreen",
+      "route": "/producer/marketplace/browse",
+      "description": "Search and browse marketplaces and commission agents with ratings and contact options",
+      "elements": [
+        {
+          "type": "search_bar",
+          "id": "marketplace_search",
+          "placeholder": "Search Marketplaces or Agents",
+          "search_fields": ["name", "location", "specialty"],
+          "debounce": 300
+        },
+        {
+          "type": "tab_selector",
+          "tabs": [
+            {"id": "marketplaces", "label": "Marketplaces"},
+            {"id": "agents", "label": "Commission Agents"}
+          ],
+          "default": "agents"
+        },
+        {
+          "type": "list_view",
+          "items_source": "marketplaces_agents",
+          "api_endpoint": "/api/marketplaces-agents",
+          "fields": [
+            {"key": "name", "label": "Name", "type": "text"},
+            {"key": "company", "label": "Company", "type": "text"},
+            {"key": "rating", "label": "Rating", "type": "stars", "max": 5},
+            {"key": "location", "label": "Location", "type": "text"},
+            {"key": "commission", "label": "Commission %", "type": "percentage"},
+            {"key": "verified", "label": "Verified", "type": "badge"}
+          ],
+          "actions": [
+            {
+              "id": "contact_marketplace",
+              "label": "Contact Marketplace",
+              "icon": "MessageCircle",
+              "next_screen": "chat_screen"
+            },
+            {
+              "id": "engage_agent",
+              "label": "Engage Commission Agent",
+              "icon": "Handshake",
+              "next_screen": "commission_agent_engagement"
+            }
+          ]
+        }
+      ],
+      "prerequisites": ["lot_tokenized"],
+      "data_required": ["user_location", "commodity_type"]
+    },
+    {
+      "id": "commodity_listing_sell",
+      "title": "List Commodity for Sale",
+      "component": "CommodityListingScreen",
+      "route": "/producer/marketplace/list",
+      "description": "Create a marketplace listing with AI-powered quality assessment",
+      "elements": [
+        {
+          "type": "location_autofill",
+          "id": "listing_location",
+          "source": "gps",
+          "editable": true
+        },
+        {
+          "type": "form",
+          "id": "commodity_listing_form",
+          "fields": [
+            {
+              "name": "commodity_type",
+              "label": "Commodity Type",
+              "type": "dropdown",
+              "options_source": "commodity_types",
+              "required": true,
+              "prefilled": true
+            },
+            {
+              "name": "quantity",
+              "label": "Quantity (kg)",
+              "type": "numeric_input",
+              "required": true,
+              "min": 1,
+              "prefilled": true
+            },
+            {
+              "name": "quality_grade",
+              "label": "Quality Grade",
+              "type": "dropdown",
+              "options": ["A", "B", "C"],
+              "required": true,
+              "prefilled": true
+            },
+            {
+              "name": "expected_price",
+              "label": "Expected Price (per kg)",
+              "type": "numeric_input",
+              "required": true,
+              "currency": true
+            },
+            {
+              "name": "description",
+              "label": "Additional Description",
+              "type": "textarea",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "type": "file_upload",
+          "id": "commodity_media",
+          "accept": ["images", "videos"],
+          "max_files": 10,
+          "max_size_mb": 50,
+          "required": true
+        },
+        {
+          "type": "ai_assessment_display",
+          "id": "grok_assessment",
+          "trigger": "after_upload",
+          "fields": [
+            {"key": "size", "label": "Size Analysis"},
+            {"key": "color", "label": "Color Quality"},
+            {"key": "quality", "label": "Quality Assessment"},
+            {"key": "recommendations", "label": "AI Recommendations"}
+          ],
+          "confidence_score": true
+        },
+        {
+          "type": "button",
+          "id": "list_for_sale",
+          "label": "List for Sale",
+          "style": "primary",
+          "disabled_until": ["form_valid", "ai_assessment_complete"]
+        }
+      ],
+      "prerequisites": ["sell_decision_made"],
+      "data_required": ["lot_id", "producer_id"],
+      "api_endpoint": "/api/marketplace/listings"
+    },
+    {
+      "id": "chat_screen",
+      "title": "Chat with Buyer / Agent",
+      "component": "ChatScreen",
+      "route": "/producer/chat/:conversation_id",
+      "description": "Secure chat interface with virtual numbers and consent-based contact sharing",
+      "elements": [
+        {
+          "type": "chat_interface",
+          "id": "secure_chat",
+          "virtual_numbers_visible": true,
+          "features": ["real_time_messaging", "read_receipts", "typing_indicators"],
+          "privacy": {
+            "real_numbers_hidden": true,
+            "virtual_numbers_shown": true,
+            "consent_required_for_real_contact": true
+          }
+        },
+        {
+          "type": "media_send_button",
+          "id": "send_media",
+          "accept": ["images", "videos", "documents"],
+          "max_size_mb": 25
+        },
+        {
+          "type": "button",
+          "id": "request_contact_exchange",
+          "label": "Request to Exchange Contact Info",
+          "consent_required": true,
+          "notification": "both_parties",
+          "description": "Both parties must agree to share real contact information"
+        },
+        {
+          "type": "quick_actions",
+          "actions": [
+            {"id": "share_lot_details", "label": "Share Lot Details", "icon": "Share"},
+            {"id": "schedule_meeting", "label": "Schedule Meeting", "icon": "Calendar"},
+            {"id": "negotiate_price", "label": "Make Price Offer", "icon": "DollarSign"}
+          ]
+        }
+      ],
+      "prerequisites": ["listing_created_or_agent_selected"],
+      "data_required": ["conversation_id", "participant_ids"],
+      "api_endpoint": "/api/chat"
+    },
+    {
+      "id": "commission_agent_engagement",
+      "title": "Engage Commission Agent",
+      "component": "CommissionAgentEngagementScreen",
+      "route": "/producer/agent/engage/:agent_id",
+      "description": "Simplified agent engagement screen before full order form",
+      "elements": [
+        {
+          "type": "profile_card",
+          "entity": "commission_agent",
+          "fields": [
+            {"key": "name", "label": "Agent Name"},
+            {"key": "company", "label": "Company"},
+            {"key": "rating", "label": "Rating", "format": "stars"},
+            {"key": "services", "label": "Services Offered", "format": "list"},
+            {"key": "commission", "label": "Commission Rate", "format": "percentage"},
+            {"key": "experience", "label": "Years of Experience"},
+            {"key": "verified", "label": "Verification Status", "format": "badge"}
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "engagement_type",
+          "label": "Select engagement type",
+          "required": true,
+          "options": [
+            {
+              "id": "direct",
+              "label": "Direct Sale Assistance",
+              "description": "Agent helps you find buyers and negotiate, but you handle the final transaction"
+            },
+            {
+              "id": "representation",
+              "label": "Representation for Sale",
+              "description": "Agent fully represents you in sale, handles all negotiations and transactions"
+            }
+          ]
+        },
+        {
+          "type": "otp_confirmation",
+          "id": "dual_otp",
+          "labels": ["Producer OTP", "Agent OTP"],
+          "length": 6,
+          "actions": [
+            {"id": "send_otp", "label": "Send OTP", "trigger": "selection_complete"},
+            {"id": "verify_otp", "label": "Verify OTP", "trigger": "both_otps_entered"}
+          ],
+          "timeout": 300
+        },
+        {
+          "type": "button",
+          "id": "confirm_engagement",
+          "label": "Confirm Engagement",
+          "style": "primary",
+          "disabled_until": ["engagement_type_selected", "otps_verified"],
+          "next_screen": "order_confirmation"
+        }
+      ],
+      "prerequisites": ["agent_selected"],
+      "data_required": ["agent_id", "producer_id", "lot_id"],
+      "api_endpoint": "/api/agents/engage"
+    },
+    {
+      "id": "order_confirmation",
+      "title": "Order Confirmation & Verification",
+      "component": "OrderConfirmationVerificationScreen",
+      "route": "/producer/order/confirm/:order_id",
+      "description": "Complete order form with OTP verification and Grok AI quality analysis",
+      "elements": [
+        {
+          "type": "order_summary",
+          "id": "order_details",
+          "sections": [
+            {
+              "title": "Producer Details",
+              "fields": ["name", "contact", "location"]
+            },
+            {
+              "title": "Commodity Details",
+              "fields": ["commodity_type", "lot_ids", "quantity", "quality_grade"]
+            },
+            {
+              "title": "Agent Details",
+              "fields": ["agent_name", "company", "commission_rate"]
+            },
+            {
+              "title": "Service Type",
+              "fields": ["engagement_type"]
+            }
+          ]
+        },
+        {
+          "type": "otp_input",
+          "id": "order_otp",
+          "label": "Enter OTP to confirm",
+          "length": 6,
+          "resend_enabled": true,
+          "timeout": 300
+        },
+        {
+          "type": "media_capture",
+          "id": "quality_verification_media",
+          "purpose": "Grok AI Quality Analysis",
+          "accept": ["images", "videos"],
+          "camera_enabled": true,
+          "required": true,
+          "description": "Upload or capture photos/videos for AI quality verification"
+        },
+        {
+          "type": "terms_acceptance",
+          "id": "order_terms",
+          "content": "I authorize the commission agent to act on my behalf for this engagement",
+          "required": true
+        },
+        {
+          "type": "digital_signature",
+          "id": "order_signature",
+          "placeholder": "Type your full name as digital signature",
+          "required": true
+        },
+        {
+          "type": "button",
+          "id": "confirm_order",
+          "label": "Confirm Order",
+          "style": "primary",
+          "disabled_until": ["otp_verified", "media_uploaded", "terms_accepted", "signature_provided"],
+          "next_screen": "grok_ai_quality_assessment"
+        }
+      ],
+      "prerequisites": ["engagement_confirmed"],
+      "data_required": ["order_id", "producer_id", "agent_id"],
+      "api_endpoint": "/api/orders/confirm"
+    },
+    {
+      "id": "grok_ai_quality_assessment",
+      "title": "AI Quality Validation",
+      "component": "GrokAIQualityAssessmentScreen",
+      "route": "/producer/ai-assessment/:assessment_id",
+      "description": "Real-time Grok AI quality assessment with fraud detection",
+      "elements": [
+        {
+          "type": "camera_interface",
+          "id": "ai_camera",
+          "modes": ["photo", "video"],
+          "real_time_analysis": true,
+          "overlay_guidance": true,
+          "features": ["auto_focus", "flash_control", "grid_lines"]
+        },
+        {
+          "type": "real_time_analysis",
+          "id": "grok_analysis",
+          "processing_indicator": true,
+          "fields": [
+            {
+              "key": "size",
+              "label": "Size Analysis",
+              "description": "Grain/product size measurement and consistency"
+            },
+            {
+              "key": "color",
+              "label": "Color Quality",
+              "description": "Color uniformity and grade validation"
+            },
+            {
+              "key": "quality",
+              "label": "Overall Quality",
+              "description": "Comprehensive quality assessment"
+            },
+            {
+              "key": "fraud_alert",
+              "label": "Fraud Alert",
+              "description": "Anomaly and fraud detection",
+              "alert_on_positive": true,
+              "color_coding": {"safe": "green", "alert": "red"}
+            }
+          ],
+          "confidence_score": {
+            "display": true,
+            "threshold": 70,
+            "warning_below_threshold": true
+          }
+        },
+        {
+          "type": "assessment_results",
+          "id": "final_results",
+          "display_mode": "card_grid",
+          "timestamp": true,
+          "downloadable": true,
+          "shareable": true
+        },
+        {
+          "type": "button",
+          "id": "approve_continue",
+          "label": "Approve and Continue",
+          "style": "primary",
+          "disabled_until": ["analysis_complete"],
+          "disabled_if": ["fraud_detected"],
+          "success_action": "complete_order"
+        }
+      ],
+      "prerequisites": ["order_confirmed", "media_uploaded"],
+      "data_required": ["assessment_id", "order_id"],
+      "api_endpoint": "/api/grok/assess-quality"
+    }
+  ],
+  "flow": [
+    {
+      "from": "storage_or_sell_decision",
+      "to": "storage_facility_selection",
+      "condition": "Store",
+      "trigger": "button_click",
+      "data_passed": ["lot_id", "commodity_type", "quantity"]
+    },
+    {
+      "from": "storage_or_sell_decision",
+      "to": "commodity_listing_sell",
+      "condition": "Sell",
+      "trigger": "button_click",
+      "data_passed": ["lot_id", "commodity_type", "quantity", "quality_grade"]
+    },
+    {
+      "from": "storage_facility_selection",
+      "to": "marketplace_agent_browsing",
+      "condition": "facility_selected",
+      "trigger": "selection_confirmed",
+      "optional": true,
+      "description": "After storage, producer may want to sell later"
+    },
+    {
+      "from": "commodity_listing_sell",
+      "to": "chat_screen",
+      "condition": "listing_created",
+      "trigger": "buyer_contact",
+      "data_passed": ["listing_id", "buyer_id"]
+    },
+    {
+      "from": "commodity_listing_sell",
+      "to": "marketplace_agent_browsing",
+      "condition": "prefer_agent",
+      "trigger": "button_click",
+      "optional": true,
+      "description": "Producer decides to use commission agent instead"
+    },
+    {
+      "from": "marketplace_agent_browsing",
+      "to": "commission_agent_engagement",
+      "condition": "agent_selected",
+      "trigger": "engage_button_click",
+      "data_passed": ["agent_id", "lot_id"]
+    },
+    {
+      "from": "marketplace_agent_browsing",
+      "to": "chat_screen",
+      "condition": "marketplace_contact",
+      "trigger": "contact_button_click",
+      "data_passed": ["marketplace_id", "lot_id"]
+    },
+    {
+      "from": "commission_agent_engagement",
+      "to": "order_confirmation",
+      "condition": "engagement_confirmed",
+      "trigger": "confirm_button_click",
+      "data_passed": ["agent_id", "engagement_type", "otp_verification"]
+    },
+    {
+      "from": "order_confirmation",
+      "to": "grok_ai_quality_assessment",
+      "condition": "order_confirmed",
+      "trigger": "confirm_button_click",
+      "data_passed": ["order_id", "media_urls"]
+    },
+    {
+      "from": "grok_ai_quality_assessment",
+      "to": "order_complete",
+      "condition": "assessment_approved",
+      "trigger": "approve_button_click",
+      "final": true,
+      "success_message": "Order successfully confirmed with AI quality verification"
+    }
+  ],
+  "api_integration": {
+    "base_url": "/api/producer",
+    "endpoints": [
+      {
+        "path": "/storage-facilities",
+        "method": "GET",
+        "params": ["location", "quantity", "filters"],
+        "response": "storage_facilities_list"
+      },
+      {
+        "path": "/marketplaces-agents",
+        "method": "GET",
+        "params": ["search", "location", "type"],
+        "response": "marketplaces_agents_list"
+      },
+      {
+        "path": "/marketplace/listings",
+        "method": "POST",
+        "body": ["commodity_details", "media", "pricing"],
+        "response": "listing_created"
+      },
+      {
+        "path": "/chat/send",
+        "method": "POST",
+        "body": ["conversation_id", "message", "media"],
+        "response": "message_sent"
+      },
+      {
+        "path": "/agents/engage",
+        "method": "POST",
+        "body": ["agent_id", "lot_id", "engagement_type"],
+        "response": "engagement_initiated"
+      },
+      {
+        "path": "/agents/send-otp",
+        "method": "POST",
+        "body": ["producer_id", "agent_id"],
+        "response": "otps_sent"
+      },
+      {
+        "path": "/agents/verify-otp",
+        "method": "POST",
+        "body": ["producer_otp", "agent_otp"],
+        "response": "verification_result"
+      },
+      {
+        "path": "/orders/confirm",
+        "method": "POST",
+        "body": ["order_details", "media", "signature"],
+        "response": "order_confirmed"
+      },
+      {
+        "path": "/grok/assess-quality",
+        "method": "POST",
+        "body": ["media_urls", "commodity_type"],
+        "response": "assessment_results"
+      }
+    ]
+  },
+  "design_tokens": {
+    "gradient_background": "linear-gradient(to bottom, #F7FAFC, #D9F2FF)",
+    "primary_blue": "#003E6D",
+    "accent_gold": "#FFD700",
+    "success_green": "#10B981",
+    "error_red": "#EF4444",
+    "warning_yellow": "#F59E0B",
+    "typography": {
+      "heading_font": "Playfair Display",
+      "label_font": "Montserrat",
+      "body_font": "Lato"
+    }
+  },
+  "platform_support": {
+    "android": true,
+    "ios": true,
+    "web": true,
+    "desktop": true,
+    "responsive_breakpoints": {
+      "mobile": "< 768px",
+      "tablet": "768px - 1024px",
+      "desktop": "> 1024px"
+    }
+  }
+}

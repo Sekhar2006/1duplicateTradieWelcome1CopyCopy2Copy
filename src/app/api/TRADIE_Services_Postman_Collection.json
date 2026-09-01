@@ -1,0 +1,520 @@
+{
+  "info": {
+    "name": "TRADIE Services API",
+    "description": "Complete API collection for TRADIE Services & Resources Hub",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "tradie-services-v1",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Producer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"userId\", jsonData.data.user_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"farmer1@example.com\",\n  \"phone\": \"+911234567890\",\n  \"password\": \"Password@123\",\n  \"role\": \"producer\",\n  \"name\": \"Ravi Kumar\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Register Provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"provider1@example.com\",\n  \"phone\": \"+919876543210\",\n  \"password\": \"Password@123\",\n  \"role\": \"provider\",\n  \"name\": \"Green Farm Equipment Rentals\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"accessToken\", jsonData.data.accessToken);",
+                  "    pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"farmer1@example.com\",\n  \"otp_code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-otp"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"accessToken\", jsonData.data.accessToken);",
+                  "    pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
+                  "    pm.environment.set(\"userId\", jsonData.data.user.user_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"farmer1@example.com\",\n  \"password\": \"Password@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Service Providers",
+      "item": [
+        {
+          "name": "Get All Providers",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/providers",
+              "host": ["{{baseUrl}}"],
+              "path": ["providers"]
+            }
+          }
+        },
+        {
+          "name": "Get Providers (Filtered)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/providers?service_type=equipment&category=JCB&district=Guntur",
+              "host": ["{{baseUrl}}"],
+              "path": ["providers"],
+              "query": [
+                {
+                  "key": "service_type",
+                  "value": "equipment"
+                },
+                {
+                  "key": "category",
+                  "value": "JCB"
+                },
+                {
+                  "key": "district",
+                  "value": "Guntur"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Provider by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/providers/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["providers", "1"]
+            }
+          }
+        },
+        {
+          "name": "Add Provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Green Farm Equipment Rentals\",\n  \"service_type\": \"equipment\",\n  \"category\": \"JCB\",\n  \"contact_info\": {\n    \"phone\": \"+911234567890\",\n    \"email\": \"contact@greenfarmequip.com\",\n    \"address\": \"123 Rural Rd, Guntur\"\n  },\n  \"location\": \"Guntur, Andhra Pradesh\",\n  \"district\": \"Guntur\",\n  \"state\": \"Andhra Pradesh\",\n  \"description\": \"Provider of JCB and other earth moving machinery on lease with operator.\",\n  \"rating\": 4.5,\n  \"documents\": [\"https://example.com/licenses/greenfarm_jcb_license.pdf\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/providers",
+              "host": ["{{baseUrl}}"],
+              "path": ["providers"]
+            }
+          }
+        },
+        {
+          "name": "Update Provider",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availability\": \"available\",\n  \"rating\": 4.8\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/providers/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["providers", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Equipment",
+      "item": [
+        {
+          "name": "Get All Equipment",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/equipment",
+              "host": ["{{baseUrl}}"],
+              "path": ["equipment"]
+            }
+          }
+        },
+        {
+          "name": "Get Equipment (Filtered)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/equipment?equipment_type=JCB&district=Guntur",
+              "host": ["{{baseUrl}}"],
+              "path": ["equipment"],
+              "query": [
+                {
+                  "key": "equipment_type",
+                  "value": "JCB"
+                },
+                {
+                  "key": "district",
+                  "value": "Guntur"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Equipment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider_id\": 1,\n  \"equipment_type\": \"JCB\",\n  \"model\": \"JCB 3DX\",\n  \"hourly_rate\": 1500,\n  \"daily_rate\": 10000,\n  \"operator_included\": true,\n  \"delivery_available\": true,\n  \"specifications\": {\n    \"power\": \"74 HP\",\n    \"digging_depth\": \"4.3m\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/equipment",
+              "host": ["{{baseUrl}}"],
+              "path": ["equipment"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Seller Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/seller-products",
+              "host": ["{{baseUrl}}"],
+              "path": ["seller-products"]
+            }
+          }
+        },
+        {
+          "name": "Get Products (Filtered)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/seller-products?product_category=Seeds&district=Guntur",
+              "host": ["{{baseUrl}}"],
+              "path": ["seller-products"],
+              "query": [
+                {
+                  "key": "product_category",
+                  "value": "Seeds"
+                },
+                {
+                  "key": "district",
+                  "value": "Guntur"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider_id\": 2,\n  \"product_category\": \"Seeds\",\n  \"product_name\": \"Chili Hybrid Seeds - G4\",\n  \"price_per_unit\": 500,\n  \"unit_type\": \"100g packet\",\n  \"available_quantity\": 1000,\n  \"stock_status\": \"in_stock\",\n  \"certifications\": [\"Government Certified\", \"High Yield\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/seller-products",
+              "host": ["{{baseUrl}}"],
+              "path": ["seller-products"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Service Requests",
+      "item": [
+        {
+          "name": "Create Service Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider_id\": 1,\n  \"service_type\": \"equipment\",\n  \"subcategory\": \"JCB\",\n  \"request_description\": \"Need JCB for land leveling of 5 acres. Soil is clay type.\",\n  \"location\": \"My Farm, Pedanandipadu, Guntur\",\n  \"district\": \"Guntur\",\n  \"state\": \"Andhra Pradesh\",\n  \"start_date\": \"2025-10-28\",\n  \"end_date\": \"2025-10-30\",\n  \"budget\": 30000,\n  \"urgency\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/service-requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["service-requests"]
+            }
+          }
+        },
+        {
+          "name": "Get My Service Requests",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/service-requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["service-requests"]
+            }
+          }
+        },
+        {
+          "name": "Get Service Requests (Filtered)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/service-requests?status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["service-requests"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Seasonal Alerts",
+      "item": [
+        {
+          "name": "Get All Alerts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/seasonal-alerts",
+              "host": ["{{baseUrl}}"],
+              "path": ["seasonal-alerts"]
+            }
+          }
+        },
+        {
+          "name": "Get Alerts (Filtered)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/seasonal-alerts?alert_type=labor&district=Guntur",
+              "host": ["{{baseUrl}}"],
+              "path": ["seasonal-alerts"],
+              "query": [
+                {
+                  "key": "alert_type",
+                  "value": "labor"
+                },
+                {
+                  "key": "district",
+                  "value": "Guntur"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

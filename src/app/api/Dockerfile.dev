@@ -1,0 +1,30 @@
+# ============================================================================
+# TRADIE Backend - Development Dockerfile
+# With hot-reload support (nodemon)
+# ============================================================================
+
+FROM node:18-alpine
+
+# Install MySQL client for health checks
+RUN apk add --no-cache mysql-client
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Install ALL dependencies (including dev dependencies for nodemon)
+RUN npm install
+
+# Copy source code (will be overridden by volume mount in dev)
+COPY . .
+
+# Create logs directory
+RUN mkdir -p logs uploads
+
+# Expose port
+EXPOSE 3001
+
+# Development command (using nodemon from node_modules)
+CMD ["npm", "run", "dev"]
