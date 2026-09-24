@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Warehouse,
   Snowflake,
@@ -174,8 +174,6 @@ interface StorageAgent {
 }
 
 const StorageAndSellDashboardEnhanced: React.FC = () => {
-  const uid = useId().replace(/:/g, "");
-  const priceGradId = `colorPrice_${uid}`;
 
   // Existing State
   const [activeTab, setActiveTab] = useState<string>('storage');
@@ -587,17 +585,11 @@ const StorageAndSellDashboardEnhanced: React.FC = () => {
                 <h3 className="font-semibold text-gray-900 mb-4">7-Day Price Trend (Wheat - Ludhiana)</h3>
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={priceTrendData}>
-                    <defs>
-                      <linearGradient id={priceGradId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#2F80ED" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#2F80ED" stopOpacity={0.1}/>
-                      </linearGradient>
-                    </defs>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" style={{ fontSize: '12px' }} />
                     <YAxis style={{ fontSize: '12px' }} />
                     <RechartsTooltip />
-                    <Area type="monotone" dataKey="price" stroke="#2F80ED" fillOpacity={1} fill={`url(#${priceGradId})`} />
+                    <Area type="monotone" dataKey="price" stroke="#2F80ED" fill="#2F80ED" fillOpacity={0.2} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>

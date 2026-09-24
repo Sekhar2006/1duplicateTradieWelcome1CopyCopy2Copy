@@ -1,4 +1,4 @@
-import { useState, useId } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 import { Bot, Mic, TrendingUp, Calendar, Sparkles, Shield } from "lucide-react";
 import { DSButton, DSCard, DSBadge, designTokens } from "../../design-system";
@@ -25,9 +25,6 @@ const SUGGESTED_QUERIES = [
 ];
 
 export function AIInsightsCard() {
-  const uid = useId().replace(/:/g, "");
-  const demandGradId = `demand_${uid}`;
-  const supplyGradId = `supply_${uid}`;
 
   const [isListening, setIsListening] = useState(false);
   const [aiQuery, setAiQuery] = useState("");
@@ -117,16 +114,6 @@ export function AIInsightsCard() {
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={demandSupplyData}>
-                <defs>
-                  <linearGradient id={demandGradId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={colors.status.success} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={colors.status.success} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id={supplyGradId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={colors.status.info} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={colors.status.info} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={colors.border.light} />
                 <XAxis dataKey="month" stroke={colors.text.muted} />
                 <YAxis stroke={colors.text.muted} />
@@ -138,19 +125,21 @@ export function AIInsightsCard() {
                   }}
                 />
                 <Area
+                  key="demand"
                   type="monotone"
                   dataKey="demand"
                   stroke={colors.status.success}
-                  fillOpacity={1}
-                  fill={`url(#${demandGradId})`}
+                  fill={colors.status.success}
+                  fillOpacity={0.15}
                   strokeWidth={2}
                 />
                 <Area
+                  key="supply"
                   type="monotone"
                   dataKey="supply"
                   stroke={colors.status.info}
-                  fillOpacity={1}
-                  fill={`url(#${supplyGradId})`}
+                  fill={colors.status.info}
+                  fillOpacity={0.15}
                   strokeWidth={2}
                 />
               </AreaChart>
